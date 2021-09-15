@@ -1,11 +1,6 @@
 #ifndef BUTTON_H_INCLUDED
 #define BUTTON_H_INCLUDED
 
-enum class Style {
-    Human,
-    Orc
-};
-
 void createButton(sf::RenderWindow& window, sf::Font& font,
                   sf::Texture& unpressed, sf::Texture& pressed,
                   std::string& str,
@@ -16,9 +11,14 @@ void createButton(sf::RenderWindow& window, sf::Font& font,
     text.setFont(font);
     text.setString(str);
     sf::Sprite button;
-    if (mouseX > posX && mouseX < (posX + width)
-    button.setTexture(texture);
-    button.setPosition()
+    if (mouseX > posX && mouseX < (posX + width) &&
+        mouseY > posY && mouseY < (posY + height)) {
+        button.setTexture(pressed);
+    }
+    else {
+        button.setTexture(unpressed);
+    }
+    button.setPosition(posX, posY);
 }
 
 #endif // BUTTON_H_INCLUDED
