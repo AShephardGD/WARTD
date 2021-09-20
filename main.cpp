@@ -5,20 +5,43 @@
 
 #include "Vidgets/Button.h"
 
+//Для подсчёта атрибутов кнопки в отдельные переменные
+size_t buttonPosX = 0, buttonPosY = 0;
+float buttonWidth = 0, buttonHeight = 0;
+std::string buttonText;
+
+//Позиция клика
+size_t mousePressedX = -1, mousePressedY = -1;
+
+//Музыка и звуки
+sf::Music music;
+sf::Music buttonPressed;
+
+void MainMenu() {
+
+}
+
+void playNewGame() {
+
+}
+
+void loadGame() {
+
+}
+
+void playingGame() {
+
+}
+
 int main() {
-    //Для подсчёта атрибутов кнопки в отдельные переменные
-    size_t buttonPosX, buttonPosY, buttonWidth, buttonHeight;
-    std::string buttonText;
-
-    //Позиция клика
-    size_t mousePressedX = -1, mousePressedY = -1;
-
     //Настройка музыки в главном меню
-    sf::Music music;
     if (!music.openFromFile("Music/Warcraft II - Orc Briefing.flac")) {
-        return 1;
+        return -1;
     }
     music.setLoop(true);
+    if (!buttonPressed.openFromFile("SFX/ui/buttonPressed.wav")) {
+        return -1;
+    }
 
     //Настройка окна
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
@@ -67,16 +90,30 @@ int main() {
         //Отрисовка объектов на экране
         window.clear(sf::Color::Blue);
 
-        buttonPosX = desktopMode.width / 3;
+        window.draw(backgroundSprite);
+
+        buttonPosX = 3 * desktopMode.width / 8;
         buttonPosY = desktopMode.height / 2;
-        buttonWidth = orcPressed.getSize().x;
-        buttonHeight = orcPressed.getSize().y;
+        buttonWidth = desktopMode.width / 4;
+        buttonHeight = desktopMode.height / 25;
         buttonText = "New Game";
         createButton(window, quake, orcUnpressed, orcPressed, buttonText,
                      buttonPosX, buttonPosY, buttonWidth, buttonHeight,
                      mousePressedX, mousePressedY);
-        window.draw(backgroundSprite);
 
+        buttonPosY += buttonHeight + 3;
+        buttonText = "Load Game";
+        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                     mousePressedX, mousePressedY);
+
+        buttonPosY += buttonHeight + 3;
+        buttonText = "Exit Game";
+        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                     mousePressedX, mousePressedY);
+
+        buttonPosY -= 2 * (buttonHeight + 3);
         window.display();
 
         //Запуск музыки в главном меню
@@ -86,11 +123,34 @@ int main() {
 
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed ) {
+            if (event.type == sf::Event::Closed) {
                 window.close();
             }
-            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) {
                 window.close();
+            }
+            if (event.type == sf::Event::MouseButtonPressed) {
+                mousePressedX = sf::Mouse::getPosition().x;
+                mousePressedY = sf::Mouse::getPosition().y;
+            }
+            if (event.type == sf::Event::MouseButtonReleased) {
+                if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                    mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
+                    playNewGame();
+                    buttonPressed.play();
+                }
+                else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                         mousePressedY > (buttonPosY + buttonHeight + 3) && mousePressedY < (buttonPosY + 2 * buttonHeight + 3)) {
+                    loadGame();
+                    buttonPressed.play();
+                }
+                else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                         mousePressedY > (buttonPosY + 2 * buttonHeight + 6) && mousePressedY < (buttonPosY + 3 * buttonHeight + 6)) {
+                    window.close();
+                    buttonPressed.play();
+                }
+                mousePressedX = -1;
+                mousePressedY = -1;
             }
         }
 
