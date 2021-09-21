@@ -14,7 +14,8 @@ enum class Race {
     Orc
 };
 
-short Level = -1;
+short level = -1;
+Race race;
 
 enum class WindowStatus {
     MainMenu,
@@ -54,77 +55,168 @@ sf::Texture orcPressed, orcUnpressed, humanPressed, humanUnpressed;
 WindowStatus status = WindowStatus::MainMenu;
 
 void MainMenu() {
-        //Отрисовка объектов на экране
-        window.clear(sf::Color::Blue);
+    //Отрисовка объектов на экране
+    window.clear(sf::Color::Blue);
 
-        buttonText = "Warcraft Tower Defence";
-        sf::Text text;
-        text.setFont(quake);
-        text.setString(buttonText);
-        buttonPosX = (desktopMode.width - text.getGlobalBounds().width) / 2;
-        buttonPosY = desktopMode.height / 10;
-        text.setPosition(buttonPosX, buttonPosY);
-        window.draw(text);
+    window.draw(backgroundSprite);
 
-        window.draw(backgroundSprite);
+    buttonText = "Warcraft Tower Defence";
+    sf::Text text;
+    text.setFont(quake);
+    text.setString(buttonText);
+    text.setCharacterSize(desktopMode.height / 10);
+    buttonPosX = (desktopMode.width - text.getGlobalBounds().width) / 2;
+    buttonPosY = desktopMode.height / 10;
+    text.setPosition(buttonPosX, buttonPosY);
+    window.draw(text);
 
-        buttonPosX = 3 * desktopMode.width / 8;
-        buttonPosY = desktopMode.height / 2;
-        buttonWidth = desktopMode.width / 4;
-        buttonHeight = desktopMode.height / 25;
-        buttonText = "New Game";
-        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
-                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
-                     mousePressedX, mousePressedY);
+    buttonPosX = 3 * desktopMode.width / 8;
+    buttonPosY = desktopMode.height / 2;
+    buttonWidth = desktopMode.width / 4;
+    buttonHeight = desktopMode.height / 25;
+    buttonText = "New Game";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
 
-        buttonPosY += buttonHeight + 3;
-        buttonText = "Load Game";
-        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
-                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
-                     mousePressedX, mousePressedY);
+    buttonPosY += buttonHeight + 3;
+    buttonText = "Load Game";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
 
-        buttonPosY += buttonHeight + 3;
-        buttonText = "Exit Game";
-        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
-                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
-                     mousePressedX, mousePressedY);
+    buttonPosY += buttonHeight + 3;
+    buttonText = "Exit Game";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
 
-        buttonPosY -= 2 * (buttonHeight + 3);
-        window.display();
+    buttonPosY -= 2 * (buttonHeight + 3);
 
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            if (event.type == sf::Event::MouseButtonPressed) {
-                mousePressedX = sf::Mouse::getPosition().x;
-                mousePressedY = sf::Mouse::getPosition().y;
-            }
-            if (event.type == sf::Event::MouseButtonReleased) {
-                if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
-                    mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
-                    playNewGame();
-                    buttonPressed.play();
-                }
-                else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
-                         mousePressedY > (buttonPosY + buttonHeight + 3) && mousePressedY < (buttonPosY + 2 * buttonHeight + 3)) {
-                    loadGame();
-                    buttonPressed.play();
-                }
-                else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
-                         mousePressedY > (buttonPosY + 2 * buttonHeight + 6) && mousePressedY < (buttonPosY + 3 * buttonHeight + 6)) {
-                    window.close();
-                    buttonPressed.play();
-                }
+    window.display();
+
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
+        if (event.type == sf::Event::MouseButtonPressed) {
+            mousePressedX = sf::Mouse::getPosition().x;
+            mousePressedY = sf::Mouse::getPosition().y;
+        }
+        if (event.type == sf::Event::MouseButtonReleased) {
+            if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
                 mousePressedX = -1;
                 mousePressedY = -1;
+                status = WindowStatus::NewGame;
+                buttonPressed.play();
+                break;
             }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + buttonHeight + 3) && mousePressedY < (buttonPosY + 2 * buttonHeight + 3)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                status = WindowStatus::LoadGame;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 2 * buttonHeight + 6) && mousePressedY < (buttonPosY + 3 * buttonHeight + 6)) {
+                buttonPressed.play();
+                window.close();
+            }
+            mousePressedX = -1;
+            mousePressedY = -1;
         }
+    }
 }
 
 void playNewGame() {
+    window.clear(sf::Color::Blue);
 
+    window.draw(backgroundSprite);
+
+    buttonText = "Warcraft Tower Defence";
+    sf::Text text;
+    text.setFont(quake);
+    text.setString(buttonText);
+    text.setCharacterSize(desktopMode.height / 10);
+    buttonPosX = (desktopMode.width - text.getGlobalBounds().width) / 2;
+    buttonPosY = desktopMode.height / 10;
+    text.setPosition(buttonPosX, buttonPosY);
+    window.draw(text);
+
+    buttonText = "Choose Your Race";
+    text.setString(buttonText);
+    text.setCharacterSize(desktopMode.height / 25);
+    buttonPosX = (desktopMode.width - text.getGlobalBounds().width) / 2;
+    buttonPosY = desktopMode.height / 2 - desktopMode.height / 25 - 3;
+    text.setPosition(buttonPosX, buttonPosY);
+    window.draw(text);
+
+    buttonPosX = 3 * desktopMode.width / 8;
+    buttonPosY = desktopMode.height / 2;
+    buttonWidth = desktopMode.width / 4;
+    buttonHeight = desktopMode.height / 25;
+    buttonText = "Orc";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
+
+    buttonPosY += buttonHeight + 3;
+    buttonText = "Human";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
+
+    buttonPosY += 2 * buttonHeight + 6;
+    buttonText = "Back to Main Menu";
+    createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                 buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                 mousePressedX, mousePressedY);
+
+    window.display();
+
+    buttonPosY -= 3 * buttonHeight + 9;
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
+        if (event.type == sf::Event::MouseButtonPressed) {
+            mousePressedX = sf::Mouse::getPosition().x;
+            mousePressedY = sf::Mouse::getPosition().y;
+        }
+        if (event.type == sf::Event::MouseButtonReleased) {
+            if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                race = Race::Orc;
+                level = 1;
+                status = WindowStatus::Briefing;
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + buttonHeight + 3) && mousePressedY < (buttonPosY + 2 * buttonHeight + 3)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                race = Race::Human;
+                level = 1;
+                status = WindowStatus::Briefing;
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 3 * buttonHeight + 9) && mousePressedY < (buttonPosY + 4 * buttonHeight + 9)) {
+                buttonPressed.play();
+                status = WindowStatus::MainMenu;
+                break;
+            }
+        }
+    }
 }
 
 void loadGame() {
@@ -206,13 +298,10 @@ int main() {
                 break;
         }
 
-
         //Запуск музыки в главном меню
         if (music.getStatus() == sf::SoundSource::Stopped) {
             music.play();
         }
-
-
     }
     return 0;
 }
