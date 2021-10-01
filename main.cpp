@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
+#include <string>
+#include <fstream>
 
 #include "Vidgets/Button.h"
 void playNewGame();
@@ -34,7 +36,9 @@ std::string buttonText;
 size_t mousePressedX = -1, mousePressedY = -1;
 
 //Музыка и звуки
-sf::Music music;
+sf::Music mainMenu;
+sf::Music orcBriefing, orcVictory, orcDefeat, orc1, orc2, orc3, orc4, orc5;
+sf::Music humanBriefing, humanVictory, humanDefeat, human1, human2, human3, human4, human5;
 sf::Sound buttonPressed;
 
 //Настройка окна
@@ -42,8 +46,8 @@ sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 sf::RenderWindow window(desktopMode, "WARTD", sf::Style::Fullscreen);
 
 //Фон главного меню
-sf::Texture backgroundTexture;
-sf::Sprite backgroundSprite;
+sf::Texture backgroundTexture, briefingTexture;
+sf::Sprite backgroundSprite, briefingSprite;
 
 //Шрифт
 sf::Font quake;
@@ -54,7 +58,15 @@ sf::Texture orcPressed, orcUnpressed, humanPressed, humanUnpressed;
 //Состояние окна
 WindowStatus status = WindowStatus::MainMenu;
 
+//Тексты брифингов
+std::string orcText1;
+std::string humanText1;
+
 void MainMenu() {
+    if (mainMenu.getStatus() == sf::SoundSource::Stopped) {
+        mainMenu.play();
+    }
+
     //Отрисовка объектов на экране
     window.clear(sf::Color::Blue);
 
@@ -133,6 +145,10 @@ void MainMenu() {
 }
 
 void playNewGame() {
+    if (mainMenu.getStatus() == sf::SoundSource::Stopped) {
+        mainMenu.play();
+    }
+
     window.clear(sf::Color::Blue);
 
     window.draw(backgroundSprite);
@@ -197,6 +213,7 @@ void playNewGame() {
                 race = Race::Orc;
                 level = 1;
                 status = WindowStatus::Briefing;
+                mainMenu.stop();
                 break;
             }
             else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
@@ -207,6 +224,7 @@ void playNewGame() {
                 race = Race::Human;
                 level = 1;
                 status = WindowStatus::Briefing;
+                mainMenu.stop();
                 break;
             }
             else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
@@ -215,16 +233,193 @@ void playNewGame() {
                 status = WindowStatus::MainMenu;
                 break;
             }
+            mousePressedX = -1;
+            mousePressedY = -1;
         }
     }
 }
 
 void loadGame() {
+    if (mainMenu.getStatus() == sf::SoundSource::Stopped) {
+        mainMenu.play();
+    }
 
+    window.clear(sf::Color::Blue);
+
+    window.draw(backgroundSprite);
+
+    buttonText = "Warcraft Tower Defence";
+    sf::Text text;
+    text.setFont(quake);
+    text.setString(buttonText);
+    text.setCharacterSize(desktopMode.height / 10);
+    buttonPosX = (desktopMode.width - text.getGlobalBounds().width) / 2;
+    buttonPosY = desktopMode.height / 10;
+    text.setPosition(buttonPosX, buttonPosY);
+    window.draw(text);
+
+    buttonPosX = 3 * desktopMode.width / 8;
+    buttonPosY = desktopMode.height / 2;
+    buttonWidth = desktopMode.width / 4;
+    buttonHeight = desktopMode.height / 25;
+    std::string buttonsText[7] {"", "", "", "", "", "", "Back To Main Menu"};
+    for (short i = 0; i < 7; ++i) {
+        buttonText = buttonsText[i];
+        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                     mousePressedX, mousePressedY);
+        buttonPosY += buttonHeight + 3;
+    }
+
+    buttonPosY = desktopMode.height / 2;
+    window.display();
+
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
+        if (event.type == sf::Event::MouseButtonPressed) {
+            mousePressedX = sf::Mouse::getPosition().x;
+            mousePressedY = sf::Mouse::getPosition().y;
+        }
+        if (event.type == sf::Event::MouseButtonReleased) {
+            if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + buttonHeight + 3) && mousePressedY < (buttonPosY + 2 * buttonHeight + 3)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 2 * buttonHeight + 6) && mousePressedY < (buttonPosY + 3 * buttonHeight + 6)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 3 * buttonHeight + 9) && mousePressedY < (buttonPosY + 4 * buttonHeight + 9)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &
+                     mousePressedY > (buttonPosY + 4 * buttonHeight + 12) && mousePressedY < (buttonPosY + 5 * buttonHeight + 12)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 5 * buttonHeight + 15) && mousePressedY < (buttonPosY + 6 * buttonHeight + 15)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                break;
+            }
+            else if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                     mousePressedY > (buttonPosY + 6 * buttonHeight + 18) && mousePressedY < (buttonPosY + 7 * buttonHeight + 18)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                buttonPressed.play();
+                status = WindowStatus::MainMenu;
+                break;
+            }
+            mousePressedX = -1;
+            mousePressedY = -1;
+        }
+    }
 }
 
 void briefing() {
+    window.clear(sf::Color::Blue);
 
+    window.draw(briefingSprite);
+
+    sf::Text text;
+    text.setFont(quake);
+    if (race == Race::Orc) {
+        if (orcBriefing.getStatus() == sf::SoundSource::Stopped) {
+            orcBriefing.play();
+        }
+        text.setColor(sf::Color::Yellow);
+        switch (level) {
+            case 1:
+                text.setString(orcText1);
+                break;
+        }
+    }
+    else {
+        if (humanBriefing.getStatus() == sf::SoundSource::Stopped) {
+            humanBriefing.play();
+        }
+        text.setColor(sf::Color::White);
+        switch (level) {
+            case 1:
+                text.setString(humanText1);
+                break;
+        }
+    }
+    text.setCharacterSize(desktopMode.height / 30);
+    buttonPosX = desktopMode.width / 10;
+    buttonPosY = desktopMode.height / 10;
+    text.setPosition(buttonPosX, buttonPosY);
+    window.draw(text);
+
+    buttonWidth = desktopMode.width / 9;
+    buttonHeight = desktopMode.height / 25;
+    buttonPosX = desktopMode.width - 2 * buttonWidth;
+    buttonPosY = desktopMode.height - buttonHeight;
+    buttonText = "Continue";
+    if (race == Race::Orc) {
+        createButton(window, quake, orcUnpressed, orcPressed, buttonText,
+                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                     mousePressedX, mousePressedY);
+    }
+    else {
+        createButton(window, quake, humanUnpressed, humanPressed, buttonText,
+                     buttonPosX, buttonPosY, buttonWidth, buttonHeight,
+                     mousePressedX, mousePressedY);
+    }
+
+    window.display();
+    sf::Event event;
+    while(window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
+        if (event.type == sf::Event::MouseButtonPressed) {
+            mousePressedX = sf::Mouse::getPosition().x;
+            mousePressedY = sf::Mouse::getPosition().y;
+        }
+        if (event.type == sf::Event::MouseButtonReleased) {
+            if (mousePressedX > buttonPosX && mousePressedX < (buttonPosX + buttonWidth) &&
+                mousePressedY > buttonPosY && mousePressedY < (buttonPosY + buttonHeight)) {
+                mousePressedX = -1;
+                mousePressedY = -1;
+                status = WindowStatus::MainMenu;
+                buttonPressed.play();
+                if (race == Race::Orc) {
+                    orcBriefing.stop();
+                }
+                else {
+                    humanBriefing.stop();
+                }
+                break;
+            }
+            mousePressedX = -1;
+            mousePressedY = -1;
+        }
+    }
 }
 
 void playingGame() {
@@ -232,12 +427,77 @@ void playingGame() {
 }
 
 int main() {
-
-    //Настройка музыки в главном меню
-    if (!music.openFromFile("Music/Warcraft II - Orc Briefing.flac")) {
+    //Загрузка музыки
+    if (!mainMenu.openFromFile("Music/Warcraft II - Orc Briefing.flac")) {
         return -1;
     }
-    music.setLoop(true);
+    mainMenu.setLoop(true);
+    if (!orcBriefing.openFromFile("Music/Warcraft II - Orc Briefing.flac")) {
+        return -1;
+    }
+    orcBriefing.setLoop(true);
+    if (!orcVictory.openFromFile("Music/Warcraft II - Orc Victory.flac")) {
+        return -1;
+    }
+    orcVictory.setLoop(true);
+    if (!orcDefeat.openFromFile("Music/Warcraft II - Orc Defeat.flac")) {
+        return -1;
+    }
+    orcDefeat.setLoop(true);
+    if (!orc1.openFromFile("Music/Warcraft II - Orc BGM 1.flac")) {
+        return -1;
+    }
+    orc1.setLoop(true);
+    if (!orc2.openFromFile("Music/Warcraft II - Orc BGM 2.flac")) {
+        return -1;
+    }
+    orc2.setLoop(true);
+    if (!orc3.openFromFile("Music/Warcraft II - Orc BGM 3.flac")) {
+        return -1;
+    }
+    orc3.setLoop(true);
+    if (!orc4.openFromFile("Music/Warcraft II - Orc BGM 4.flac")) {
+        return -1;
+    }
+    orc4.setLoop(true);
+    if (!orc5.openFromFile("Music/Warcraft II - Orc BGM 5.flac")) {
+        return -1;
+    }
+    orc5.setLoop(true);
+    if (!humanBriefing.openFromFile("Music/Warcraft II - Human Briefing.flac")) {
+        return -1;
+    }
+    humanBriefing.setLoop(true);
+    if (!humanVictory.openFromFile("Music/Warcraft II - Human Victory.flac")) {
+        return -1;
+    }
+    humanVictory.setLoop(true);
+    if (!humanDefeat.openFromFile("Music/Warcraft II - Human Defeat.flac")) {
+        return -1;
+    }
+    humanDefeat.setLoop(true);
+    if (!human1.openFromFile("Music/Warcraft II - Human BGM 1.flac")) {
+        return -1;
+    }
+    human1.setLoop(true);
+    if (!human2.openFromFile("Music/Warcraft II - Human BGM 2.flac")) {
+        return -1;
+    }
+    human2.setLoop(true);
+    if (!human3.openFromFile("Music/Warcraft II - Human BGM 3.flac")) {
+        return -1;
+    }
+    human3.setLoop(true);
+    if (!human4.openFromFile("Music/Warcraft II - Human BGM 4.flac")) {
+        return -1;
+    }
+    human4.setLoop(true);
+    if (!human5.openFromFile("Music/Warcraft II - Human BGM 5.flac")) {
+        return -1;
+    }
+    human5.setLoop(true);
+
+    //Загрузка звуков
     sf::SoundBuffer buffer;
     if (!buffer.loadFromFile("SFX/ui/buttonPressed.wav")) {
         return -1;
@@ -254,6 +514,16 @@ int main() {
     float factorX = ((float) desktopMode.width) / backgroundTexture.getSize().x,
           factorY = ((float) desktopMode.height) / backgroundTexture.getSize().y;
     backgroundSprite.scale(factorX, factorY);
+
+    if (!briefingTexture.loadFromFile("Textures/ui/Briefing_background.png")) {
+        return -1;
+    }
+    briefingTexture.setSmooth(true);
+
+    briefingSprite.setTexture(briefingTexture);
+    factorX = ((float) desktopMode.width) / briefingTexture.getSize().x;
+    factorY = ((float) desktopMode.height) / briefingTexture.getSize().y;
+    briefingSprite.scale(factorX, factorY);
 
     //Загрузка шрифта
     if (!quake.loadFromFile("Fonts/Quake Cyr.ttf")) {
@@ -278,8 +548,26 @@ int main() {
     humanPressed.setSmooth(true);
     humanUnpressed.setSmooth(true);
 
-    while (window.isOpen()) {
+    //Загрузка текстов брифингов
+    std::ifstream briefingFile("Briefings/orc1.txt");
+    std::string readingString;
+    if (!briefingFile.is_open()) {
+        return -1;
+    }
+    while (std::getline(briefingFile, readingString)) {
+        orcText1 += readingString + "\n";
+    }
+    briefingFile.close();
+    briefingFile.open("Briefings/human1.txt");
+    if (!briefingFile.is_open()) {
+        return -1;
+    }
+    while (std::getline(briefingFile, readingString)) {
+        humanText1 += readingString + "\n";
+    }
+    briefingFile.close();
 
+    while (window.isOpen()) {
         switch (status) {
             case WindowStatus::MainMenu:
                 MainMenu();
@@ -296,11 +584,6 @@ int main() {
             case WindowStatus::Game:
                 playingGame();
                 break;
-        }
-
-        //Запуск музыки в главном меню
-        if (music.getStatus() == sf::SoundSource::Stopped) {
-            music.play();
         }
     }
     return 0;
