@@ -8,8 +8,12 @@
 #include <ctime>
 #include <vector>
 #include <queue>
+#include <algorithm>
+#include <chrono>
+#include <ctime>
 
 #include "Vidgets/Button.h"
+#include "SupportingClasses.h"
 
 void playNewGame();
 void loadGame();
@@ -36,24 +40,6 @@ enum class Terrarian {
     Winter
 };
 
-enum class HumanTowers {
-    Wall,
-    ScoutTower
-};
-
-enum class HumanUnits {
-    Footman,
-};
-
-enum class OrcTowers {
-    Wall,
-    ScoutTower
-};
-
-enum class OrcUnits {
-    Grunt,
-};
-
 //Настройка окна
 sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 sf::RenderWindow window(desktopMode, "WARTD", sf::Style::Fullscreen);
@@ -62,22 +48,43 @@ sf::RenderWindow window(desktopMode, "WARTD", sf::Style::Fullscreen);
 short level = -1, lastMusic = -1, music = -1, currentHealth = 20;
 size_t currentGold = 0;
 short PlayingGameIcons = 0;
-const unsigned short maxLevel = 1, MaxHealth = 20, Tower = 2, Units = 1;
+const unsigned char maxLevel = 1, MaxHealth = 20, Tower = 2, Units = 1, Ammo = 1, MaxWaves = 1;
 const unsigned short MainMenuButtons = 3, PlayNewGameButtons = 3, LoadGameButtons = 7, PlayingGameButtons = 4;
 const unsigned short boxSize = 32, windowScaleWidth = desktopMode.width / 1920, windowScaleHeight = desktopMode.height / 1080;
+
 const unsigned short HMapLeft[maxLevel] {106 * windowScaleWidth};
 const unsigned short HMapTop[maxLevel] {0};
-const unsigned short HMapWidth[maxLevel] {49};
-const unsigned short HMapHeight[maxLevel] {33};
+const unsigned short HMapWidth[maxLevel] {50};
+const unsigned short HMapHeight[maxLevel] {34};
+const unsigned short HMapEntry[3 * maxLevel] {0, 14, 6}; // ширина, высота, длина входа
 const unsigned short HHallLeft[maxLevel] {46};
 const unsigned short HHallTop[maxLevel] {12};
+const unsigned short HLevelWaves[maxLevel] {1};
+//Grunt
+const unsigned short HEnemyHealth[Units] {250};
+const unsigned char HEnemyDefense[Units] {0};
+const unsigned char HEnemyBoxWidth[Units] {72};
+const unsigned char HEnemyBoxHeight[Units] {72};
+const unsigned char HEnemyMovingBoxStart[Units] {0};
+const unsigned char HEnemyMovingBoxCount[Units] {5};
+const unsigned char HEnemyDyingBoxStart[Units] {8};
+const unsigned char HEnemyDyingBoxCount[Units] {3};
+const unsigned char HEnemyUpBox[Units] {0};
+const unsigned char HEnemyDownBox[Units] {4};
+const unsigned char HEnemyLeftBox[Units] {2};
+const unsigned char HEnemyRightBox[Units] {6};
+
 const unsigned short OMapLeft[maxLevel] {0};
 const unsigned short OMapTop[maxLevel] {184 * windowScaleHeight};
-const unsigned short OMapWidth[maxLevel] {52};
-const unsigned short OMapHeight[maxLevel] {27};
+const unsigned short OMapWidth[maxLevel] {53};
+const unsigned short OMapHeight[maxLevel] {28};
+const unsigned short OMapEntry[3 * maxLevel] {22, 0, 5}; //ширина, высота, длина входа
 const unsigned short OHallLeft[maxLevel] {0};
-const unsigned short OHallTop[maxLevel] {23};
+const unsigned short OHallTop[maxLevel] {24};
+const unsigned short OLevelWaves[maxLevel] {1};
+//Footman
 const size_t startedGold[maxLevel] {100};
+const std::pair<short, short> Waves[maxLevel][MaxWaves] = {{std::make_pair(10, 0)}};
 
 
 bool isPaused = false, cantBuild = false, notEnoughGold = false;
@@ -86,6 +93,9 @@ Race race;
 Terrarian terrarian;
 std::vector<std::vector<char>> map;
 std::vector<sf::Sprite> playingTowers;
+std::vector<Unit> currentWave;
+std::vector<sf::Sprite> ammoSprites;
+unsigned short fireIndex = 0;
 
 size_t towerCost[Tower] {1, 10};
 size_t towerAttack[2 * Tower] {0, 0, 14, 16};
@@ -118,6 +128,9 @@ sf::Texture goldTexture, buildingTexture, healthTexture;
 sf::Texture oTowerIconTextures[Tower], hTowerIconTextures[Tower];
 sf::Texture oTowerTextures[Tower], hTowerTextures[Tower];
 sf::Texture hHallTexture, oHallTexture;
+sf::Texture hEnemyTextures[Units], oEnemyTextures[Units];
+sf::Texture ammoTextures[Ammo];
+sf::Texture smallFireTexture, bigFireTexture;
 sf::Sprite backgroundSprite, briefingSprite;
 sf::Sprite hGameSprite[maxLevel];
 sf::Sprite oGameSprite[maxLevel];
@@ -126,6 +139,7 @@ sf::Sprite goldSprite, buildingSprite, healthSprite;
 sf::Sprite oTowerIconSprites[Tower], hTowerIconSprites[Tower];
 sf::Sprite oTowerSprites[Tower], hTowerSprites[Tower];
 sf::Sprite hHallSprite, oHallSprite;
+sf::Sprite smallFireSprite, bigFireSprite;
 
 //Шрифт
 sf::Font quake;
@@ -140,9 +154,61 @@ WindowStatus status = WindowStatus::MainMenu;
 std::string orcText[maxLevel];
 std::string humanText[maxLevel];
 
-unsigned short bfs(short xBox, short yBox, short dist) {
-    short maxDistance;
-
+std::vector<std::pair<short, short>> bfs() {
+    std::vector<std::vector<char>> copyMap = map;
+    std::queue<Path> q;
+    if (race == Race::Orc) {
+        q.push(Path(OMapEntry[3 * level], OMapEntry[3 * level + 1], std::vector<std::pair<short, short>>()));
+    }
+    else {
+        q.push(Path(HMapEntry[3 * level], HMapEntry[3 * level + 1], std::vector<std::pair<short, short>>()));
+    }
+    copyMap[q.front().y][q.front().x] = 9;
+    while (!q.empty()) {
+        Path p = q.front();
+        q.pop();
+        if (p.x >= 1) {
+            if (copyMap[p.y][p.x - 1] == 2) {
+                p.path.push_back(std::make_pair(p.x - 1, p.y));
+                return p.path;
+            }
+            if (!copyMap[p.y][p.x - 1]) {
+                copyMap[p.y][p.x - 1] = 9;
+                q.push(Path(p.x - 1, p.y, p.path));
+            }
+        }
+        if (p.x < copyMap[p.y].size() - 1) {
+            if (copyMap[p.y][p.x + 1] == 2) {
+                p.path.push_back(std::make_pair(p.x - 1, p.y));
+                return p.path;
+            }
+            if (!copyMap[p.y][p.x + 1]) {
+                copyMap[p.y][p.x + 1] = 9;
+                q.push(Path(p.x + 1, p.y, p.path));
+            }
+        }
+        if (p.y >= 1) {
+            if (copyMap[p.y - 1][p.x] == 2) {
+                p.path.push_back(std::make_pair(p.x, p.y - 1));
+                return p.path;
+            }
+            if (!copyMap[p.y - 1][p.x]) {
+                copyMap[p.y - 1][p.x] = 9;
+                q.push(Path(p.x, p.y - 1, p.path));
+            }
+        }
+        if (p.y < copyMap.size() - 1) {
+            if (copyMap[p.y + 1][p.x] == 2) {
+                p.path.push_back(std::make_pair(p.x, p.y + 1));
+                return p.path;
+            }
+            if (!copyMap[p.y + 1][p.x]) {
+                copyMap[p.y + 1][p.x] = 9;
+                q.push(Path(p.x, p.y + 1, p.path));
+            }
+        }
+    }
+    return std::vector<std::pair<short, short>>(0);
 }
 
 void MainMenu() {
@@ -477,6 +543,18 @@ void briefing() {
                             map[OHallTop[level] + i][OHallLeft[level] + j] = 2;
                         }
                     }
+                    for (unsigned short i = 0; i < OMapEntry[3 * level + 2]; ++i) {
+                        if (!OMapEntry[level]) {
+                            map[OMapEntry[3 * level + 1] + i][0] = 3;
+                        }
+                        else {
+                            map[0][OMapEntry[3 * level] + i] = 3;
+                        }
+                    }
+                    buttonPosX = OMapLeft[level] + (OHallLeft[level] + 2) * boxSize - smallFireSprite.getGlobalBounds().width / 2;
+                    buttonPosY = OMapTop[level] + (OHallTop[level] + 2) * boxSize - smallFireSprite.getGlobalBounds().height / 2;
+                    smallFireSprite.setPosition(buttonPosX, buttonPosY);
+                    bigFireSprite.setPosition(buttonPosX, buttonPosY);
                 }
                 else {
                     humanBriefing.stop();
@@ -486,11 +564,24 @@ void briefing() {
                             map[HHallTop[level] + i][HHallLeft[level] + j] = 2;
                         }
                     }
+                    for (unsigned short i = 0; i < HMapEntry[3 * level + 2]; ++i) {
+                        if (!HMapEntry[level]) {
+                            map[HMapEntry[3 * level + 1] + i][0] = 3;
+                        }
+                        else {
+                            map[0][HMapEntry[3 * level] + i] = 3;
+                        }
+                    }
+                    buttonPosX = HMapLeft[level] + (HHallLeft[level] + 2) * boxSize - smallFireSprite.getGlobalBounds().width / 2;
+                    buttonPosY = HMapTop[level] + (HHallTop[level] + 2) * boxSize - smallFireSprite.getGlobalBounds().height / 2;
+                    smallFireSprite.setPosition(buttonPosX, buttonPosY);
+                    bigFireSprite.setPosition(buttonPosX, buttonPosY);
                 }
                 currentGold = startedGold[level];
                 PlayingGameIcons = 1;
                 playingTowers = std::vector<sf::Sprite>();
                 isBuilding = 0;
+                currentHealth = MaxHealth;
                 break;
             }
             mousePressedX = -1;
@@ -502,10 +593,10 @@ void briefing() {
 void playingGame() {
     window.clear(sf::Color::Blue);
 
-    short dist = 0;
+    short dist = 1;
     switch (isBuilding) {
         case 2:
-            dist = 1;
+            dist = 2;
             break;
     }
 
@@ -514,7 +605,7 @@ void playingGame() {
            iconsPosX[PlayingGameIcons], iconsPosY[PlayingGameIcons],
            iconsWidth[PlayingGameIcons], iconsHeight[PlayingGameIcons];
 
-    std::string buttonsText[PlayingGameButtons] {"Exit", "Save", "Pause", "Next wave"};
+    std::string buttonsText[PlayingGameButtons] {"Exit", "Save", "Pause", "Next"};
 
     for (short i = 0; i < PlayingGameButtons; ++i) {
         buttonsWidth[i] = desktopMode.width / 9;
@@ -542,6 +633,19 @@ void playingGame() {
 
         for (unsigned short i = 0; i < playingTowers.size(); ++i) {
             window.draw(playingTowers[i]);
+        }
+
+        if (currentHealth < 5) {
+            fireIndex = fireIndex % 250;
+            bigFireSprite.setTextureRect(sf::IntRect(48 * (fireIndex % 125 / 25), 48 * (fireIndex / 125), 48, 48));
+            window.draw(bigFireSprite);
+            ++fireIndex;
+        }
+        else if (currentHealth < 15) {
+            fireIndex = fireIndex % 150;
+            smallFireSprite.setTextureRect(sf::IntRect(32 * (fireIndex % 125 / 25), 16 + 48 * (fireIndex / 125), 32, 32));
+            window.draw(smallFireSprite);
+            ++fireIndex;
         }
 
         if (isBuilding) {
@@ -597,6 +701,13 @@ void playingGame() {
 
         for (unsigned short i = 0; i < playingTowers.size(); ++i) {
             window.draw(playingTowers[i]);
+        }
+
+        if (currentHealth < 15) {
+            smallFireSprite.setTextureRect(sf::IntRect(32 * (fireIndex % 125 / 25), 16 + 48 * (fireIndex / 125), 32, 32));
+            window.draw(smallFireSprite);
+            ++fireIndex;
+            fireIndex = fireIndex % 150;
         }
 
         if (isBuilding) {
@@ -785,10 +896,8 @@ void playingGame() {
             else if (isBuilding) {
                 cantBuild = false;
                 notEnoughGold = false;
-                for (unsigned short i = 0; i <= dist; ++i) {
-                    for (unsigned short j = 0; j <= dist; ++j) {
-                        std::cout << map.size() << " " << yBox + i << " ";
-                        std::cout << map[yBox + i].size() << " " << xBox + j << std::endl;
+                for (unsigned short i = 0; i < dist; ++i) {
+                    for (unsigned short j = 0; j < dist; ++j) {
                         if (map[yBox + i][xBox + j]) {
                             error.play();
                             cantBuild = true;
@@ -804,6 +913,21 @@ void playingGame() {
                     notEnoughGold = true;
                     break;
                 }
+                for (unsigned short i = 0; i < dist; ++i) {
+                    for (unsigned short j = 0; j < dist; ++j) {
+                        map[yBox + i][xBox + j] = 1;
+                    }
+                }
+                if (!bfs().size()) {
+                    error.play();
+                    cantBuild = true;
+                    for (unsigned short i = 0; i < dist; ++i) {
+                        for (unsigned short j = 0; j < dist; ++j) {
+                            map[yBox + i][xBox + j] = 0;
+                        }
+                    }
+                    break;
+                }
                 construction.play();
                 if (race == Race::Orc) {
                     playingTowers.push_back(sf::Sprite(oTowerTextures[isBuilding - 1]));
@@ -813,11 +937,6 @@ void playingGame() {
                 }
                 playingTowers[playingTowers.size() - 1].setPosition(towerX, towerY);
                 playingTowers[playingTowers.size() - 1].setScale(windowScaleWidth, windowScaleHeight);
-                for (unsigned short i = 0; i <= dist; ++i) {
-                    for (unsigned short j = 0; j <= dist; ++j) {
-                        map[yBox + i][xBox + j] = 1;
-                    }
-                }
                 mousePressedX = -1;
                 mousePressedY = -1;
                 currentGold -= towerCost[isBuilding - 1];
@@ -825,6 +944,8 @@ void playingGame() {
             }
             mousePressedX = -1;
             mousePressedY = -1;
+            cantBuild = false;
+            notEnoughGold = false;
         }
     }
 
@@ -976,21 +1097,43 @@ int main() {
     hHallSprite.setPosition(8 * desktopMode.width / 9 - hHallSprite.getGlobalBounds().width,
                             3 * hHallSprite.getGlobalBounds().height);
 
-    std::vector<std::string> names = {"wall", "watch_tower", "wall", "scout_tower"};
+    std::vector<std::string> strings = {"wall", "watch_tower", "wall", "scout_tower"};
     for (unsigned short i = 0; i < Tower; ++i) {
-        if (!oTowerTextures[i].loadFromFile("Textures/Tilesets/Orc/" + names[i] + ".png")) {
+        if (!oTowerTextures[i].loadFromFile("Textures/Tilesets/Orc/" + strings[i] + ".png")) {
             return -1;
         }
         oTowerTextures[i].setSmooth(true);
         oTowerSprites[i].setTexture(oTowerTextures[i]);
         oTowerSprites[i].setScale(windowScaleWidth, windowScaleHeight);
-        if (!hTowerTextures[i].loadFromFile("Textures/Tilesets/Human/" + names[i + Tower] + ".png")) {
+        if (!hTowerTextures[i].loadFromFile("Textures/Tilesets/Human/" + strings[i + Tower] + ".png")) {
             return -1;
         }
         hTowerTextures[i].setSmooth(true);
         hTowerSprites[i].setTexture(hTowerTextures[i]);
         hTowerSprites[i].setScale(windowScaleWidth, windowScaleHeight);
     }
+
+    strings = {"footman", "grunt"};
+    for (unsigned short i = 0; i < Units; ++i) {
+        if (!oEnemyTextures[i].loadFromFile("Textures/Tilesets/Human/" + strings[i] + ".png")) {
+            return -1;
+        }
+        oEnemyTextures[i].setSmooth(true);
+        if (!hEnemyTextures[i].loadFromFile("Textures/Tilesets/Orc/" + strings[i + Units] + ".png")) {
+            return -1;
+        }
+        hEnemyTextures[i].setSmooth(true);
+    }
+
+    strings = {"arrow"};
+    for (unsigned short i = 0; i < Ammo; ++i) {
+        if (!ammoTextures[i].loadFromFile("Textures/Tilesets/" + strings[i] + ".png")) {
+            return -1;
+        }
+        ammoTextures[i].setSmooth(true);
+    }
+
+
 
     factorX = ((float) desktopMode.width) / 1024;
     if (!goldTexture.loadFromFile("Textures/ui/gold.png")) {
@@ -1032,6 +1175,21 @@ int main() {
         hTowerIconSprites[i].setPosition(buttonPosX, buttonPosY);
         oTowerIconSprites[i].setPosition(buttonPosX, buttonPosY);
     }
+
+    if (!smallFireTexture.loadFromFile("Textures/Tilesets/small_fire.png")) {
+        return -1;
+    }
+    smallFireTexture.setSmooth(true);
+    smallFireSprite.setTexture(smallFireTexture);
+    smallFireSprite.setTextureRect(sf::IntRect(0, 0, 48, 48));
+    smallFireSprite.setScale(windowScaleWidth, windowScaleHeight);
+    if (!bigFireTexture.loadFromFile("Textures/Tilesets/big_fire.png")) {
+        return -1;
+    }
+    bigFireTexture.setSmooth(true);
+    bigFireSprite.setTexture(bigFireTexture);
+    bigFireSprite.setTextureRect(sf::IntRect(0, 0, 48, 48));
+    bigFireSprite.setScale(windowScaleWidth, windowScaleHeight);
 
     //Загрузка карт уровней
     for (short i = 0; i < maxLevel; ++i) {
