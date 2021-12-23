@@ -7,7 +7,7 @@
 
 void createButton(sf::RenderWindow& window, sf::Font& font,
                   sf::Texture& unpressed, sf::Texture& pressed,
-                  std::string& str,
+                  const std::string& str,
                   size_t posX, size_t posY,
                   float width, float height,
                   size_t mouseX, size_t mouseY) {
