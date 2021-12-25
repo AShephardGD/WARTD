@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="WARTDProject" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/WARTDProject" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DSFML_STATIC" />
+					<Add directory="SFML-2.5.1/include" />
+				</Compiler>
+				<Linker>
+					<Add library="SFML-2.5.1/lib/libsfml-audio-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-graphics-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-window-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-system-s.a" />
+					<Add library="SFML-2.5.1/lib/libFLAC.a" />
+					<Add library="SFML-2.5.1/lib/libfreetype.a" />
+					<Add library="SFML-2.5.1/lib/libogg.a" />
+					<Add library="SFML-2.5.1/lib/libopenal32.a" />
+					<Add library="SFML-2.5.1/lib/libvorbis.a" />
+					<Add library="SFML-2.5.1/lib/libvorbisenc.a" />
+					<Add library="SFML-2.5.1/lib/libvorbisfile.a" />
+					<Add library="SFML-2.5.1/lib/opengl32.dll" />
+					<Add library="SFML-2.5.1/lib/gdi32.dll" />
+					<Add library="SFML-2.5.1/lib/winmm.dll" />
+					<Add library="SFML-2.5.1/lib/openal32.dll" />
+					<Add directory="C:/Users/kolegoz/Downloads/SFML-2.5.1/lib" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/WARTDProject" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DSFML_STATIC" />
+					<Add directory="SFML-2.5.1/include" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add library="SFML-2.5.1/lib/libsfml-audio-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-graphics-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-window-s.a" />
+					<Add library="SFML-2.5.1/lib/libsfml-system-s.a" />
+					<Add library="SFML-2.5.1/lib/libFLAC.a" />
+					<Add library="SFML-2.5.1/lib/libfreetype.a" />
+					<Add library="SFML-2.5.1/lib/libogg.a" />
+					<Add library="SFML-2.5.1/lib/libopenal32.a" />
+					<Add library="SFML-2.5.1/lib/libvorbis.a" />
+					<Add library="SFML-2.5.1/lib/libvorbisenc.a" />
+					<Add library="SFML-2.5.1/lib/libvorbisfile.a" />
+					<Add library="SFML-2.5.1/lib/opengl32.dll" />
+					<Add library="SFML-2.5.1/lib/gdi32.dll" />
+					<Add library="SFML-2.5.1/lib/winmm.dll" />
+					<Add library="SFML-2.5.1/lib/openal32.dll" />
+					<Add directory="C:/Users/kolegoz/Downloads/SFML-2.5.1/lib" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-DSFML_STATIC" />
+			<Add directory="SFML-2.5.1/include" />
+		</Compiler>
+		<Linker>
+			<Add library="SFML-2.5.1/lib/libsfml-audio-s.a" />
+			<Add library="SFML-2.5.1/lib/libsfml-graphics-s.a" />
+			<Add library="SFML-2.5.1/lib/libsfml-window-s.a" />
+			<Add library="SFML-2.5.1/lib/libsfml-system-s.a" />
+			<Add library="SFML-2.5.1/lib/libFLAC.a" />
+			<Add library="SFML-2.5.1/lib/libfreetype.a" />
+			<Add library="SFML-2.5.1/lib/libogg.a" />
+			<Add library="SFML-2.5.1/lib/libopenal32.a" />
+			<Add library="SFML-2.5.1/lib/libvorbis.a" />
+			<Add library="SFML-2.5.1/lib/libvorbisenc.a" />
+			<Add library="SFML-2.5.1/lib/libvorbisfile.a" />
+			<Add library="SFML-2.5.1/lib/opengl32.dll" />
+			<Add library="SFML-2.5.1/lib/gdi32.dll" />
+			<Add library="SFML-2.5.1/lib/winmm.dll" />
+			<Add library="SFML-2.5.1/lib/openal32.dll" />
+			<Add directory="C:/Users/kolegoz/Downloads/SFML-2.5.1/lib" />
+		</Linker>
+		<Unit filename="SupportingClasses.h" />
+		<Unit filename="Vidgets/Button.h" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
